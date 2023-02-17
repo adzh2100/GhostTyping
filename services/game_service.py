@@ -1,13 +1,23 @@
 import random
-from lib.constants import DICTIONARY_FILE, INITIAL_GHOST_SIZE, LEADERBOARD_FILE, MAX_GHOST_SIZE, WINDOW_HEIGHT, WINDOW_WIDTH
+import pygame
+from lib.constants import (
+    DICTIONARY_FILE,
+    LEADERBOARD_FILE,
+    MAX_GHOST_SIZE,
+    WINDOW_HEIGHT,
+    WINDOW_WIDTH,
+)
 from services.file_service import FileService
 from models.word_field import WordField
 from models.life import Life
 from models.score import Score
-import pygame
+
+DIFFICULTY_LEN_MAP = {"Easy": 4, "Medium": 6, "Hard": 100}
 
 
-class GameService():
+class GameService:
+    """Service that handles the gameplay logic"""
+
     def __init__(self):
         pygame.init()
         self._points = 0
@@ -18,57 +28,93 @@ class GameService():
         self.current_words = []
         self._time_elapsed_playing = 0
         self._words_written = 0
+        self._difficulty = "Easy"
 
     def generate_random_coordinates(self):
         """Generates random coordinates to use when spawning a new word in"""
-        x = random.randrange(MAX_GHOST_SIZE, WINDOW_WIDTH - MAX_GHOST_SIZE)
-        y = random.randrange(MAX_GHOST_SIZE, WINDOW_HEIGHT - MAX_GHOST_SIZE)
+        x_coord = random.randrange(MAX_GHOST_SIZE, WINDOW_WIDTH - MAX_GHOST_SIZE)
+        y_coord = random.randrange(MAX_GHOST_SIZE, WINDOW_HEIGHT - MAX_GHOST_SIZE)
 
-        return x, y
+        return x_coord, y_coord
 
-    def _generate_random_word(self, depth, max_depth):
+    def apply_all_fitlers(self, word):
+        used = word in self._last_used_words
+        max_length = DIFFICULTY_LEN_MAP[self._difficulty]
+        exists_with_same_letter = any(word[0] == word[0] for word in self.current_words)
+
+        return not used and len(word) <= max_length and not exists_with_same_letter
+
+    def apply_high_priority_filters(self, word):
+        max_length = DIFFICULTY_LEN_MAP[self._difficulty]
+        exists_with_same_letter = any(word[0] == word[0] for word in self.current_words)
+
+        return len(word) <= max_length and not exists_with_same_letter
+
+    def apply_difficulty_filter_only(self, word):
+        max_length = DIFFICULTY_LEN_MAP[self._difficulty]
+
+        return len(word) <= max_length
+
+    def _generate_random_word(self):
         """Generates a random word from a dictionary"""
-        unused_words = list(filter(lambda word: word not in self._last_used_words, self._dictionary))
-        random_index = random.randint(0, len(unused_words) - 1)
-        generated_word = unused_words[random_index]
-        
-        if any(word[0] == generated_word[0] for word in self.current_words) and depth < max_depth:
-            return self._generate_random_word(depth + 1, max_depth)
+        applicable_words = list(filter(self.apply_all_fitlers, self._dictionary))
+
+        if len(applicable_words) == 0:
+            applicable_words = list(
+                filter(self.apply_high_priority_filters, self._dictionary)
+            )
+
+        if len(applicable_words) == 0:
+            applicable_words = list(
+                filter(self.apply_difficulty_filter_only, self._dictionary)
+            )
+
+        random_index = random.randint(0, len(applicable_words) - 1)
+        generated_word = applicable_words[random_index]
 
         if len(self._last_used_words) == 100:
             self._last_used_words.pop()
-            
+
         self.current_words.append(generated_word)
         self._last_used_words.append(generated_word)
         self._words_written += 1
-        return generated_word    
+
+        return generated_word
 
     def _extract_score_from_line(self, line):
-        name, points = line.split(',')
+        name, points = line.split(",")
         return Score(name, points)
-    
-    def _extract_rect_from_box(self, box):
-        x, y = box.get_coordinates()
-        ghost_offset = 20
-        return box.get_ghost().get_rect(center=(x - ghost_offset, y - ghost_offset * 2))
-    
-    def _extract_dictionary_from_file(self, file):
-        return list(map(lambda word: word[:-1].lower(), self._file_service.read_from_file(file)))
 
-    def generate_random_box(self, other_boxes):
-        x, y = self.generate_random_coordinates()
-        word = self._generate_random_word(0, 10)
-        box = WordField(x, y, word)
+    def _extract_rect_from_box(self, box):
+        x_coord, y_coord = box.get_coordinates()
+        ghost_offset = 20
+
+        return box.get_ghost().get_rect(
+            center=(x_coord - ghost_offset, y_coord - ghost_offset * 2)
+        )
+
+    def _extract_dictionary_from_file(self, file):
+        return list(
+            map(lambda word: word[:-1].lower(), self._file_service.read_from_file(file))
+        )
+
+    def generate_random_box(self, other_boxes, depth=0, max_depth=10):
+        x_coord, y_coord = self.generate_random_coordinates()
+        word = self._generate_random_word()
+        box = WordField(x_coord, y_coord, word)
+
+        if depth == max_depth:
+            return box
 
         rectangles = list(map(self._extract_rect_from_box, other_boxes))
         rectangle = self._extract_rect_from_box(box)
 
         collision_index = pygame.Rect.collidelist(rectangle, rectangles)
         if collision_index != -1:
-            return self.generate_random_box(other_boxes)
+            return self.generate_random_box(other_boxes, depth + 1)
         else:
             return box
-    
+
     def add_points(self, box):
         self._points += len(box.get_original_text())
         self.current_words.remove(box.get_original_text())
@@ -81,30 +127,31 @@ class GameService():
 
     def get_lives(self):
         return sorted(self._lives, key=lambda life: life.is_used())
-    
+
     def has_lives(self):
-        return len([life for life in self._lives if life.is_used() == False]) > 0
+        return len([life for life in self._lives if not life.is_used()]) > 0
 
     def remove_life(self):
-        life = next((l for l in self._lives if l.is_used() == False), None)
+        life = next((l for l in self._lives if not l.is_used()), None)
         life.mark_as_used()
-   
+
     def refill_lives(self):
         for life in self._lives:
             life.mark_as_unused()
-    
+
     def save_score(self, user):
         self._file_service.append_to_file(
-            LEADERBOARD_FILE,
-            user + ',' + self.get_points().__str__() + '\n'
-            )
-        
+            LEADERBOARD_FILE, user + "," + str(self.get_points()) + "\n"
+        )
+
     def get_leaderboard(self):
-        scores = list(map(
-            self._extract_score_from_line,
-            self._file_service.read_from_file(LEADERBOARD_FILE)
-            ))
-        
+        scores = list(
+            map(
+                self._extract_score_from_line,
+                self._file_service.read_from_file(LEADERBOARD_FILE),
+            )
+        )
+
         return sorted(scores, key=lambda score: int(score.get_points()), reverse=True)
 
     def set_time_elapsed_playing(self, time):
@@ -116,3 +163,6 @@ class GameService():
         self._time_elapsed_playing = 0
         self._words_written = 0
         self.refill_lives()
+
+    def set_difficulty(self, difficulty):
+        self._difficulty = difficulty

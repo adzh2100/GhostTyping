@@ -5,6 +5,6 @@ class Score:
 
     def get_points(self):
         return self._points
-    
+
     def get_name(self):
         return self._name

@@ -1,64 +1,117 @@
+import pygame
+import pygame_gui
 from lib.constants import *
 from services.game_service import GameService
 from models.name_field import NameField
-import pygame
-import pygame_gui
+
 
 class ScreenService:
     def __init__(self):
         pygame.init()
         pygame.mixer.init()
 
-        self._screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+        self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
         pygame.display.set_caption("Ghost Typing!")
 
         house = pygame.image.load("assets/images/house.jpeg").convert()
         logo = pygame.image.load("assets/images/logo.png")
-        self._house = pygame.transform.smoothscale(house, self._screen.get_size())
+        self._house = pygame.transform.smoothscale(house, self.screen.get_size())
         self._logo = pygame.transform.smoothscale(logo, (1000, 1000))
         self._leaderboard_image = pygame.image.load("assets/images/leaderboard.png")
-        self._translucent_ghost_image = pygame.image.load("assets/images/translucent-ghost.png")
-        self._translucent_ghost_image_2 = pygame.image.load("assets/images/translucent_ghost_2.png")
+        self._settings_image = pygame.image.load("assets/images/settings.png")
+        self._difficulty_image = pygame.image.load("assets/images/difficulty.png")
+        self._music_image = pygame.image.load("assets/images/music.png")
+        self._translucent_ghost_image = pygame.image.load(
+            "assets/images/translucent-ghost.png"
+        )
+        self._translucent_ghost_image_2 = pygame.image.load(
+            "assets/images/translucent_ghost_2.png"
+        )
         self._bat_image = pygame.image.load("assets/images/bat.png")
         self._initial_bat_image = self._bat_image
-        
+
         # Clock
-        self._clock = pygame.time.Clock()
+        self.clock = pygame.time.Clock()
 
         # Text font
         self._font = pygame.font.Font("freesansbold.ttf", 32)
 
         self.manager = pygame_gui.UIManager((WINDOW_WIDTH, WINDOW_HEIGHT))
-        
+
         center_x = WINDOW_WIDTH // 2 - BUTTON_SIZE[0] // 2
         center_y = WINDOW_HEIGHT // 2
 
-        self.start_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((center_x, center_y), BUTTON_SIZE),
-                                             text='Start',
-                                             manager=self.manager)
-        self.leaderboard_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((center_x, center_y + BUTTON_SIZE[1] + 10), BUTTON_SIZE),
-                                             text='Leaderboard',
-                                             manager=self.manager)
-        self.quit_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((center_x, center_y + (BUTTON_SIZE[1] + 10) * 2), BUTTON_SIZE),
-                                             text='Quit',
-                                             manager=self.manager)
-        self.save_score_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((center_x, center_y), BUTTON_SIZE),
-                                             text='Save score',
-                                             manager=self.manager,
-                                             visible=False)
-        self.play_again_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((center_x, (center_y + BUTTON_SIZE[1] + 10)), BUTTON_SIZE),
-                                             text='Play again',
-                                             manager=self.manager,
-                                             visible=False)
-        self.menu_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((center_x, (center_y + BUTTON_SIZE[1] + 10) * 2), BUTTON_SIZE),
-                                             text='Menu',
-                                             manager=self.manager,
-                                             visible=False)
-        self.leaderboard_component = pygame_gui.elements.UITextBox(
-            relative_rect=pygame.Rect((100, 110), (WINDOW_WIDTH - 200, WINDOW_HEIGHT - 300)),
-            html_text='',
+        self.start_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((center_x, center_y), BUTTON_SIZE),
+            text="Start",
             manager=self.manager,
-            visible=False
+        )
+        self.leaderboard_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(
+                (center_x, center_y + BUTTON_SIZE[1] + 10), BUTTON_SIZE
+            ),
+            text="Leaderboard",
+            manager=self.manager,
+        )
+        self.settings_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(
+                (center_x, center_y + (BUTTON_SIZE[1] + 10) * 2), BUTTON_SIZE
+            ),
+            text="Settings",
+            manager=self.manager,
+        )
+        self.quit_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(
+                (center_x, center_y + (BUTTON_SIZE[1] + 10) * 3), BUTTON_SIZE
+            ),
+            text="Quit",
+            manager=self.manager,
+        )
+        self.save_score_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((center_x, center_y), BUTTON_SIZE),
+            text="Save score",
+            manager=self.manager,
+            visible=False,
+        )
+        self.play_again_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(
+                (center_x, (center_y + BUTTON_SIZE[1] + 10)), BUTTON_SIZE
+            ),
+            text="Play again",
+            manager=self.manager,
+            visible=False,
+        )
+        self.menu_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(
+                (center_x, (center_y + BUTTON_SIZE[1] + 10) * 2), BUTTON_SIZE
+            ),
+            text="Menu",
+            manager=self.manager,
+            visible=False,
+        )
+
+        self.leaderboard_component = pygame_gui.elements.UITextBox(
+            relative_rect=pygame.Rect(
+                (100, 110), (WINDOW_WIDTH - 200, WINDOW_HEIGHT - 300)
+            ),
+            html_text="",
+            manager=self.manager,
+            visible=False,
+        )
+
+        self.difficulty_component = pygame_gui.elements.UISelectionList(
+            relative_rect=pygame.Rect((WINDOW_WIDTH // 2 - 125, 420), (250, 66)),
+            manager=self.manager,
+            item_list=["Easy", "Medium", "Hard"],
+            default_selection="Easy",
+            visible=False,
+        )
+
+        self.music_component = pygame_gui.elements.UISelectionList(
+            relative_rect=pygame.Rect((WINDOW_WIDTH // 2 - 125, 590), (250, 46)),
+            item_list=["On", "Off"],
+            default_selection="On",
+            visible=False,
         )
 
         self.wrong_sound = pygame.mixer.Sound("assets/sounds/wrong.mp3")
@@ -68,34 +121,41 @@ class ScreenService:
         self._playing = False
         self._game_service = GameService()
         self._input_fields = []
-        self._name_input = NameField(WINDOW_WIDTH // 2 - 320 // 2, WINDOW_HEIGHT // 2 - 32 // 2 - 30, '...')
-        self._background_starting_position = (-self._translucent_ghost_image.get_width(), WINDOW_HEIGHT // 2)
+        self._name_input = NameField(
+            WINDOW_WIDTH // 2 - 320 // 2, WINDOW_HEIGHT // 2 - 32 // 2 - 30, "..."
+        )
+        self._background_starting_position = (
+            -self._translucent_ghost_image.get_width(),
+            WINDOW_HEIGHT // 2,
+        )
         self.y_change = 1
         self.bat_coordinates = self._game_service.generate_random_coordinates()
 
     def draw_window(self):
-        self._screen.blit(self._house, (0, 0))
-        self._screen.blit(self._logo, (WINDOW_WIDTH // 10, - WINDOW_HEIGHT // 7))
+        self.screen.blit(self._house, (0, 0))
+        self.screen.blit(self._logo, (WINDOW_WIDTH // 10, -WINDOW_HEIGHT // 7))
 
     def add_new_word(self):
         box = self._game_service.generate_random_box(self._input_fields)
         self._input_fields.append(box)
-        
+
         x, y = box.get_coordinates()
         txt_surface = self._font.render(box.get_text(), True, box.get_color())
 
         text_offset = 5
         ghost_offset = 20
 
-        self._screen.blit(box.get_ghost(), (x - ghost_offset, y - ghost_offset * 2))
-        self._screen.blit(txt_surface, (x + text_offset, y + text_offset))
-        
-        pygame.draw.rect(self._screen, box.get_color(), box.get_box())
+        self.screen.blit(box.get_ghost(), (x - ghost_offset, y - ghost_offset * 2))
+        self.screen.blit(txt_surface, (x + text_offset, y + text_offset))
+
+        pygame.draw.rect(self.screen, box.get_color(), box.get_box())
 
     def update_fields(self, key):
         if key in KEY_LETTER_MAP:
             letter = KEY_LETTER_MAP[key]
-            active_fields = list(filter(lambda field: field.is_active(), self._input_fields))
+            active_fields = list(
+                filter(lambda field: field.is_active(), self._input_fields)
+            )
             valid = False
             if len(active_fields) == 0:
                 active_fields = self._input_fields
@@ -105,7 +165,7 @@ class ScreenService:
                     self._input_fields.remove(box)
                     box.set_text(text[1:])
 
-                    if box.get_text() != '':
+                    if box.get_text() != "":
                         self._input_fields.append(box)
                     else:
                         self._game_service.add_points(box)
@@ -115,21 +175,29 @@ class ScreenService:
                     break
             if not valid:
                 pygame.mixer.Sound.play(self.wrong_sound)
+        elif key == pygame.K_BACKSPACE:
+            active_fields = list(
+                filter(lambda field: field.is_active(), self._input_fields)
+            )
+            if len(active_fields) == 0:
+                pygame.mixer.Sound.play(self.wrong_sound)
+            else:
+                field = active_fields[0]
+                field.deactivate()
         else:
             pygame.mixer.Sound.play(self.wrong_sound)
-            pass
 
     def rerender(self):
-        self._screen.blit(self._house, (0, 0))
+        self.screen.blit(self._house, (0, 0))
         if self._playing:
             x = LIVES_OFFSET
             distance = LIFE_SIZE[0] + 1
 
             for life in self._game_service.get_lives():
                 if life.is_used():
-                    self._screen.blit(life.get_icon_inactive(), (x, 0))
+                    self.screen.blit(life.get_icon_inactive(), (x, 0))
                 else:
-                    self._screen.blit(life.get_icon_active(), (x, 0))
+                    self.screen.blit(life.get_icon_active(), (x, 0))
                 x = x + distance
 
         for field in self._input_fields:
@@ -140,11 +208,13 @@ class ScreenService:
 
             text_offset = 5
             ghost_offset = 20
-        
+
             txt_surface = self._font.render(field.get_text(), True, COLOR_BLACK)
-            self._screen.blit(field.get_ghost(), (x - ghost_offset, y - ghost_offset * 2))
-            pygame.draw.rect(self._screen, field.get_color(), field.get_box())
-            self._screen.blit(txt_surface, (box_x + text_offset, box_y + text_offset))
+            self.screen.blit(
+                field.get_ghost(), (x - ghost_offset, y - ghost_offset * 2)
+            )
+            pygame.draw.rect(self.screen, field.get_color(), field.get_box())
+            self.screen.blit(txt_surface, (box_x + text_offset, box_y + text_offset))
 
     def increase_ghosts_size(self):
         for field in self._input_fields:
@@ -176,15 +246,19 @@ class ScreenService:
         self.play_again_button.show()
         self.menu_button.set_position((center_x, center_y + (BUTTON_SIZE[1] + 10) * 2))
         self.menu_button.show()
-        
+
     def show_menu_buttons(self):
+        self.music_component.hide()
+        self.difficulty_component.hide()
         self.start_button.show()
+        self.settings_button.show()
         self.leaderboard_button.show()
         self.quit_button.show()
-        
+
     def hide_menu_buttons(self):
         self.start_button.hide()
         self.leaderboard_button.hide()
+        self.settings_button.hide()
         self.quit_button.hide()
         self._game_service.reset()
 
@@ -198,7 +272,7 @@ class ScreenService:
 
     def game_over(self, time_elapsed_playing):
         self._game_service.set_time_elapsed_playing(time_elapsed_playing)
-        self._screen.blit(self._house, (0, 0))
+        self.screen.blit(self._house, (0, 0))
         self._input_fields = []
         self._playing = False
         self.show_after_buttons()
@@ -206,29 +280,39 @@ class ScreenService:
         self.refill_lifes()
 
     def show_score(self):
-        points = self._game_service.get_points().__str__()
-        game_over_text = 'Game over! Your score is ' + points + ' points'
+        points = str(self._game_service.get_points())
+        game_over_text = "Game over! Your score is " + points + " points"
         txt_surface = self._font.render(game_over_text, True, COLOR_WHITE)
 
-        self._screen.blit(txt_surface, (WINDOW_WIDTH // 2 - 275, WINDOW_HEIGHT // 2 - 100))
+        self.screen.blit(
+            txt_surface, (WINDOW_WIDTH // 2 - 275, WINDOW_HEIGHT // 2 - 100)
+        )
         txt_surface = self._font.render(self._name_input.get_text(), True, COLOR_WHITE)
 
-        pygame.draw.rect(self._screen, COLOR_GREY, self._name_input.get_box())
-        pygame.draw.rect(self._screen, COLOR_BLACK, (WINDOW_WIDTH // 2 - 324 // 2, WINDOW_HEIGHT // 2 - 34 // 2 - 30, 324, 34), 2)
-        self._screen.blit(txt_surface, (WINDOW_WIDTH // 2 - 324 // 2 + 5, WINDOW_HEIGHT // 2 - 34 // 2 - 30))
+        pygame.draw.rect(self.screen, COLOR_GREY, self._name_input.get_box())
+        pygame.draw.rect(
+            self.screen,
+            COLOR_BLACK,
+            (WINDOW_WIDTH // 2 - 324 // 2, WINDOW_HEIGHT // 2 - 34 // 2 - 30, 324, 34),
+            2,
+        )
+        self.screen.blit(
+            txt_surface,
+            (WINDOW_WIDTH // 2 - 324 // 2 + 5, WINDOW_HEIGHT // 2 - 34 // 2 - 30),
+        )
 
     def update_name(self, key):
         current_text = self._name_input.get_text()
-        
+
         if key in KEY_LETTER_MAP:
             letter = KEY_LETTER_MAP[key]
-            self._name_input.set_text(current_text + letter) 
+            self._name_input.set_text(current_text + letter)
         elif key == pygame.K_BACKSPACE:
             self._name_input.set_text(current_text[:-1])
-        
-        self._screen.blit(self._house, (0, 0))
+
+        self.screen.blit(self._house, (0, 0))
         self.show_score()
-    
+
     def on_start_clicked(self):
         self.hide_menu_buttons()
         self._playing = True
@@ -238,7 +322,7 @@ class ScreenService:
         self._game_service.save_score(user)
         self._game_service.reset()
 
-        self._name_input.set_text('...')
+        self._name_input.set_text("...")
         self.hide_after_buttons()
         self.show_leaderboard()
 
@@ -250,11 +334,15 @@ class ScreenService:
         self.hide_after_buttons()
         self._playing = True
 
+    def on_settings_clicked(self):
+        self.hide_menu_buttons()
+        self.show_settings()
+
     def show_leaderboard(self):
-        self._screen.blit(self._house, (0, 0))
+        self.screen.blit(self._house, (0, 0))
         center_x = WINDOW_WIDTH // 2 - BUTTON_SIZE[0] // 2
 
-        self._screen.blit(self._leaderboard_image, (WINDOW_WIDTH // 2 - 250, -175))
+        self.screen.blit(self._leaderboard_image, (WINDOW_WIDTH // 2 - 250, -175))
         self.leaderboard_component.show()
         self.menu_button.set_position((center_x, WINDOW_HEIGHT - 150))
         self.menu_button.show()
@@ -263,32 +351,77 @@ class ScreenService:
 
         counter = 1
         for score in scores:
-            place = counter.__str__()
+            place = str(counter)
             name = score.get_name()
             points = score.get_points()
-            self.leaderboard_component.append_html_text(place + '. ' + name + ' - ' + points + '\n')
+            self.leaderboard_component.append_html_text(
+                place + ". " + name + " - " + points + "\n"
+            )
             counter += 1
+
+    def show_settings(self):
+        self.screen.blit(self._house, (0, 0))
+        self.screen.blit(self._settings_image, (WINDOW_WIDTH // 2 - 250, 0))
+        self.screen.blit(self._difficulty_image, (WINDOW_WIDTH // 2 - 250, 150))
+        self.difficulty_component.show()
+        self.screen.blit(self._music_image, (WINDOW_WIDTH // 2 - 250, 320))
+
+        self.music_component.show()
+        center_x = WINDOW_WIDTH // 2 - BUTTON_SIZE[0] // 2
+        self.menu_button.set_position((center_x, WINDOW_HEIGHT - 250))
+        self.menu_button.show()
 
     def update(self):
         self.draw_window()
 
         if self._bat_image.get_width() < 500:
-            self._bat_image = pygame.transform.smoothscale(self._initial_bat_image, (self._bat_image.get_width() + 1, self._bat_image.get_height() + 1))
+            self._bat_image = pygame.transform.smoothscale(
+                self._initial_bat_image,
+                (self._bat_image.get_width() + 1, self._bat_image.get_height() + 1),
+            )
         else:
             self.bat_coordinates = self._game_service.generate_random_coordinates()
             self._bat_image = pygame.transform.smoothscale(self._bat_image, (50, 50))
 
-        self._screen.blit(self._translucent_ghost_image, self._background_starting_position)
-        self._screen.blit(self._translucent_ghost_image_2, (self._background_starting_position[0] - self._translucent_ghost_image_2.get_width(), self._background_starting_position[0] - self._translucent_ghost_image_2.get_width()))
-        self._screen.blit(self._bat_image, self.bat_coordinates)
-                
-        if (self._background_starting_position[0] == WINDOW_WIDTH):
-                self._background_starting_position = (0, self._background_starting_position[1])
-        
-        if (self._background_starting_position[1] == WINDOW_HEIGHT // 2 + 20):
+        self.screen.blit(
+            self._translucent_ghost_image, self._background_starting_position
+        )
+        self.screen.blit(
+            self._translucent_ghost_image_2,
+            (
+                self._background_starting_position[0]
+                - self._translucent_ghost_image_2.get_width(),
+                self._background_starting_position[0]
+                - self._translucent_ghost_image_2.get_width(),
+            ),
+        )
+        self.screen.blit(self._bat_image, self.bat_coordinates)
+
+        if self._background_starting_position[0] == WINDOW_WIDTH:
+            self._background_starting_position = (
+                0,
+                self._background_starting_position[1],
+            )
+
+        if self._background_starting_position[1] == WINDOW_HEIGHT // 2 + 20:
             self.y_change = -1
-        if (self._background_starting_position[1] == WINDOW_HEIGHT // 2 - 20):
+        if self._background_starting_position[1] == WINDOW_HEIGHT // 2 - 20:
             self.y_change = 1
 
-        self._background_starting_position = (self._background_starting_position[0] + 1, self._background_starting_position[1] + self.y_change)
+        self._background_starting_position = (
+            self._background_starting_position[0] + 1,
+            self._background_starting_position[1] + self.y_change,
+        )
 
+    def update_music(self):
+        selection = self.music_component.get_single_selection()
+
+        if selection == "On":
+            pygame.mixer.music.play(-1)
+        else:
+            pygame.mixer.music.stop()
+
+    def update_difficulty(self):
+        selection = self.difficulty_component.get_single_selection()
+
+        self._game_service.set_difficulty(selection)
