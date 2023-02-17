@@ -13,7 +13,7 @@ class WordField(InputField):
 
         ghost = pygame.image.load("assets/images/ghost.png")
         self._ghost = pygame.transform.smoothscale(ghost, self._ghost_size)
-        self._original_ghost = self._ghost
+        self._original_ghost = ghost
 
         self._color_inactive = pygame.Color(COLOR_INACTIVE)
         self._color_active = pygame.Color(COLOR_ACTIVE)
@@ -40,11 +40,11 @@ class WordField(InputField):
 
     def enlarge_ghost(self):
         width, height = self._ghost_size
-        width = width * 1.01
-        height = height * 1.01
+        width = width + 1
+        height = width + 1
         self._ghost_size = width, height
         self._ghost = pygame.transform.smoothscale(self._original_ghost, self._ghost_size)
 
-        self._box.x = self._box.x + 0.15
+        self._box.x = self._box.x + 0.5
         self._box.y = self._box.y + 1
         

@@ -1,5 +1,5 @@
 import random
-from lib.constants import DICTIONARY_FILE, INITIAL_GHOST_SIZE, LEADERBOARD_FILE, WINDOW_HEIGHT, WINDOW_WIDTH
+from lib.constants import DICTIONARY_FILE, INITIAL_GHOST_SIZE, LEADERBOARD_FILE, MAX_GHOST_SIZE, WINDOW_HEIGHT, WINDOW_WIDTH
 from services.file_service import FileService
 from models.word_field import WordField
 from models.life import Life
@@ -19,10 +19,10 @@ class GameService():
         self._time_elapsed_playing = 0
         self._words_written = 0
 
-    def _generate_random_coordinates(self):
+    def generate_random_coordinates(self):
         """Generates random coordinates to use when spawning a new word in"""
-        x = random.randrange(INITIAL_GHOST_SIZE[0], WINDOW_WIDTH - INITIAL_GHOST_SIZE[0])
-        y = random.randrange(INITIAL_GHOST_SIZE[1], WINDOW_HEIGHT - INITIAL_GHOST_SIZE[1])
+        x = random.randrange(MAX_GHOST_SIZE, WINDOW_WIDTH - MAX_GHOST_SIZE)
+        y = random.randrange(MAX_GHOST_SIZE, WINDOW_HEIGHT - MAX_GHOST_SIZE)
 
         return x, y
 
@@ -56,7 +56,7 @@ class GameService():
         return list(map(lambda word: word[:-1].lower(), self._file_service.read_from_file(file)))
 
     def generate_random_box(self, other_boxes):
-        x, y = self._generate_random_coordinates()
+        x, y = self.generate_random_coordinates()
         word = self._generate_random_word(0, 10)
         box = WordField(x, y, word)
 

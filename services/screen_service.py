@@ -17,7 +17,11 @@ class ScreenService:
         self._house = pygame.transform.smoothscale(house, self._screen.get_size())
         self._logo = pygame.transform.smoothscale(logo, (1000, 1000))
         self._leaderboard_image = pygame.image.load("assets/images/leaderboard.png")
-
+        self._translucent_ghost_image = pygame.image.load("assets/images/translucent-ghost.png")
+        self._translucent_ghost_image_2 = pygame.image.load("assets/images/translucent_ghost_2.png")
+        self._bat_image = pygame.image.load("assets/images/bat.png")
+        self._initial_bat_image = self._bat_image
+        
         # Clock
         self._clock = pygame.time.Clock()
 
@@ -57,16 +61,20 @@ class ScreenService:
             visible=False
         )
 
-        pygame.mixer.music.load("assets/sounds/wrong.mp3")
+        self.wrong_sound = pygame.mixer.Sound("assets/sounds/wrong.mp3")
+        pygame.mixer.music.load("assets/sounds/soundtrack.mp3")
+        pygame.mixer.music.play(-1)
 
         self._playing = False
         self._game_service = GameService()
         self._input_fields = []
         self._name_input = NameField(WINDOW_WIDTH // 2 - 320 // 2, WINDOW_HEIGHT // 2 - 32 // 2 - 30, '...')
+        self._background_starting_position = (-self._translucent_ghost_image.get_width(), WINDOW_HEIGHT // 2)
+        self.y_change = 1
+        self.bat_coordinates = self._game_service.generate_random_coordinates()
 
     def draw_window(self):
         self._screen.blit(self._house, (0, 0))
-
         self._screen.blit(self._logo, (WINDOW_WIDTH // 10, - WINDOW_HEIGHT // 7))
 
     def add_new_word(self):
@@ -106,9 +114,9 @@ class ScreenService:
                     valid = True
                     break
             if not valid:
-                pygame.mixer.music.play()
+                pygame.mixer.Sound.play(self.wrong_sound)
         else:
-            pygame.mixer.music.play()
+            pygame.mixer.Sound.play(self.wrong_sound)
             pass
 
     def rerender(self):
@@ -260,3 +268,27 @@ class ScreenService:
             points = score.get_points()
             self.leaderboard_component.append_html_text(place + '. ' + name + ' - ' + points + '\n')
             counter += 1
+
+    def update(self):
+        self.draw_window()
+
+        if self._bat_image.get_width() < 500:
+            self._bat_image = pygame.transform.smoothscale(self._initial_bat_image, (self._bat_image.get_width() + 1, self._bat_image.get_height() + 1))
+        else:
+            self.bat_coordinates = self._game_service.generate_random_coordinates()
+            self._bat_image = pygame.transform.smoothscale(self._bat_image, (50, 50))
+
+        self._screen.blit(self._translucent_ghost_image, self._background_starting_position)
+        self._screen.blit(self._translucent_ghost_image_2, (self._background_starting_position[0] - self._translucent_ghost_image_2.get_width(), self._background_starting_position[0] - self._translucent_ghost_image_2.get_width()))
+        self._screen.blit(self._bat_image, self.bat_coordinates)
+                
+        if (self._background_starting_position[0] == WINDOW_WIDTH):
+                self._background_starting_position = (0, self._background_starting_position[1])
+        
+        if (self._background_starting_position[1] == WINDOW_HEIGHT // 2 + 20):
+            self.y_change = -1
+        if (self._background_starting_position[1] == WINDOW_HEIGHT // 2 - 20):
+            self.y_change = 1
+
+        self._background_starting_position = (self._background_starting_position[0] + 1, self._background_starting_position[1] + self.y_change)
+

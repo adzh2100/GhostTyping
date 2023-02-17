@@ -16,9 +16,10 @@ def main():
     time_gap = INITIAL_SPEED_CHANGE_TIME
     started = False
     firstRun = True
+    on_menu_page = True
 
     while run:
-        dt = screen._clock.tick(20) 
+        dt = screen._clock.tick(50) 
         if not screen.has_lives():
             screen.game_over(time_elapsed_playing)
             
@@ -31,6 +32,7 @@ def main():
             if event.type == pygame_gui.UI_BUTTON_PRESSED:
 
                 if event.ui_element == screen.start_button:
+                    on_menu_page = False
                     started = True
                     firstRun = True
                     screen.on_start_clicked()
@@ -39,17 +41,21 @@ def main():
                     run = False
 
                 if event.ui_element == screen.menu_button:
+                    on_menu_page = True
                     screen.show_menu()
 
                 if event.ui_element == screen.play_again_button:
+                    on_menu_page = False
                     started = True
                     firstRun = True
                     screen.on_play_again_clicked()
 
                 if event.ui_element == screen.leaderboard_button:
+                    on_menu_page = False
                     screen.on_leaderboard_clicked()
 
                 if event.ui_element == screen.save_score_button:
+                    on_menu_page = False
                     screen.on_save_clicked()
 
             if event.type == pygame.QUIT:
@@ -79,6 +85,9 @@ def main():
             screen.increase_ghosts_size()
             screen.update_ghosts()
 
+        elif not started and on_menu_page:
+            screen.update()  
+  
         screen.manager.update(dt)
         screen.manager.draw_ui(screen._screen)
         pygame.display.update()       
