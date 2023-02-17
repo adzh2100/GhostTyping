@@ -18,6 +18,7 @@ class WordField(InputField):
 
         self._color_inactive = pygame.Color(COLOR_INACTIVE)
         self._color_active = pygame.Color(COLOR_ACTIVE)
+
         self._color = self._color_inactive
         self._active = False
         self._original_text = text
@@ -47,9 +48,11 @@ class WordField(InputField):
         self._ghost = pygame.transform.smoothscale(
             self._original_ghost, self._ghost_size
         )
+        x, y = self.get_coordinates()
+        rect = self._ghost.get_rect(topleft=(x, y))
 
-        self._box.x = self._box.x + 0.5
-        self._box.y = self._box.y + 1
+        self._box.x = rect.center[0] - self._box.width // 2 - 20
+        self._box.y = rect.center[1] - self._box.height // 2
 
     def deactivate(self):
         self._active = False

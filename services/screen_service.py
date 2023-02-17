@@ -34,7 +34,10 @@ class ScreenService:
         self.clock = pygame.time.Clock()
 
         # Text font
-        self._font = pygame.font.Font("freesansbold.ttf", 32)
+        self._font_input = pygame.font.Font("assets/fonts/carnevalee_freakshow.ttf", 32)
+        self._font_game_over = pygame.font.Font(
+            "assets/fonts/carnevalee_freakshow.ttf", 64
+        )
 
         self.manager = pygame_gui.UIManager((WINDOW_WIDTH, WINDOW_HEIGHT))
 
@@ -140,15 +143,29 @@ class ScreenService:
         self._input_fields.append(box)
 
         x, y = box.get_coordinates()
-        txt_surface = self._font.render(box.get_text(), True, box.get_color())
+        txt_surface = self._font_input.render(box.get_text(), True, box.get_color())
 
-        text_offset = 5
         ghost_offset = 20
 
-        self.screen.blit(box.get_ghost(), (x - ghost_offset, y - ghost_offset * 2))
-        self.screen.blit(txt_surface, (x + text_offset, y + text_offset))
+        rect = box.get_box()
 
-        pygame.draw.rect(self.screen, box.get_color(), box.get_box())
+        self.screen.blit(box.get_ghost(), (x - ghost_offset, y - ghost_offset * 2))
+        self.screen.blit(
+            txt_surface,
+            (
+                rect.center[0] - txt_surface.get_width() // 2,
+                rect.center[1] - txt_surface.get_height() // 2,
+            ),
+        )
+
+        pygame.draw.rect(self.screen, box.get_color(), rect, border_radius=5)
+        pygame.draw.rect(
+            self.screen,
+            COLOR_BLACK,
+            (rect.x - 1, rect.y - 1, rect.width + 2, rect.height + 2),
+            width=2,
+            border_radius=5,
+        )
 
     def update_fields(self, key):
         if key in KEY_LETTER_MAP:
@@ -204,17 +221,30 @@ class ScreenService:
             x, y = field.get_coordinates()
 
             box = field.get_box()
-            box_x, box_y = box.x, box.y
 
-            text_offset = 5
             ghost_offset = 20
 
-            txt_surface = self._font.render(field.get_text(), True, COLOR_BLACK)
+            txt_surface = self._font_input.render(field.get_text(), True, COLOR_BLACK)
             self.screen.blit(
                 field.get_ghost(), (x - ghost_offset, y - ghost_offset * 2)
             )
-            pygame.draw.rect(self.screen, field.get_color(), field.get_box())
-            self.screen.blit(txt_surface, (box_x + text_offset, box_y + text_offset))
+
+            pygame.draw.rect(self.screen, field.get_color(), box, border_radius=5)
+            pygame.draw.rect(
+                self.screen,
+                COLOR_BLACK,
+                (box.x - 1, box.y - 1, box.width + 2, box.height + 2),
+                width=2,
+                border_radius=5,
+            )
+
+            self.screen.blit(
+                txt_surface,
+                (
+                    box.center[0] - txt_surface.get_width() // 2,
+                    box.center[1] - txt_surface.get_height() // 2,
+                ),
+            )
 
     def increase_ghosts_size(self):
         for field in self._input_fields:
@@ -282,23 +312,40 @@ class ScreenService:
     def show_score(self):
         points = str(self._game_service.get_points())
         game_over_text = "Game over! Your score is " + points + " points"
-        txt_surface = self._font.render(game_over_text, True, COLOR_WHITE)
+        txt_surface = self._font_game_over.render(
+            game_over_text, True, COLOR_WHITE, COLOR_BLACK
+        )
 
         self.screen.blit(
-            txt_surface, (WINDOW_WIDTH // 2 - 275, WINDOW_HEIGHT // 2 - 100)
+            txt_surface,
+            (
+                WINDOW_WIDTH // 2 - txt_surface.get_width() // 2,
+                WINDOW_HEIGHT // 2 - 150,
+            ),
         )
-        txt_surface = self._font.render(self._name_input.get_text(), True, COLOR_WHITE)
+        txt_surface = self._font_input.render(
+            self._name_input.get_text(), True, COLOR_WHITE
+        )
 
         pygame.draw.rect(self.screen, COLOR_GREY, self._name_input.get_box())
         pygame.draw.rect(
             self.screen,
             COLOR_BLACK,
-            (WINDOW_WIDTH // 2 - 324 // 2, WINDOW_HEIGHT // 2 - 34 // 2 - 30, 324, 34),
+            (
+                WINDOW_WIDTH // 2 - (self._name_input.get_box().width + 4) // 2,
+                WINDOW_HEIGHT // 2 - (self._name_input.get_box().height + 4) // 2 - 30,
+                324,
+                34,
+            ),
             2,
         )
+
         self.screen.blit(
             txt_surface,
-            (WINDOW_WIDTH // 2 - 324 // 2 + 5, WINDOW_HEIGHT // 2 - 34 // 2 - 30),
+            (
+                WINDOW_WIDTH // 2 - txt_surface.get_width() // 2 + 5,
+                WINDOW_HEIGHT // 2 - txt_surface.get_height() // 2 - 30,
+            ),
         )
 
     def update_name(self, key):
