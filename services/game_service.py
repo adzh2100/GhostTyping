@@ -121,7 +121,10 @@ class GameService:
 
     def get_points(self):
         seconds_playing = self._time_elapsed_playing / 1000
-        avg_word_length = self._points / self._words_written
+        if self._words_written:
+            avg_word_length = self._points / self._words_written
+        else:
+            avg_word_length = 0
 
         return int(avg_word_length * seconds_playing)
 
