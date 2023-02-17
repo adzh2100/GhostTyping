@@ -389,7 +389,10 @@ class ScreenService:
         self.screen.blit(self._house, (0, 0))
         center_x = WINDOW_WIDTH // 2 - BUTTON_SIZE[0] // 2
 
-        self.screen.blit(self._leaderboard_image, (WINDOW_WIDTH // 2 - 250, -175))
+        self.screen.blit(
+            self._leaderboard_image,
+            (WINDOW_WIDTH // 2 - self._leaderboard_image.get_width() // 2, -170),
+        )
         self.leaderboard_component.show()
         self.menu_button.set_position((center_x, WINDOW_HEIGHT - 150))
         self.menu_button.show()

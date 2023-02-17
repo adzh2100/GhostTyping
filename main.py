@@ -18,12 +18,13 @@ def main():
     started = False
     first_run = True
     on_menu_page = True
+    on_game_over = True
 
     while run:
         dt = screen.clock.tick(50)
         if not screen.has_lives():
             screen.game_over(time_elapsed_playing)
-
+            on_game_over = True
             started = False
             time_elapsed_playing = 0
             time_gap = INITIAL_SPEED_CHANGE_TIME
@@ -34,6 +35,7 @@ def main():
 
                 if event.ui_element == screen.start_button:
                     on_menu_page = False
+                    on_game_over = False
                     started = True
                     first_run = True
                     screen.on_start_clicked()
@@ -43,24 +45,29 @@ def main():
 
                 if event.ui_element == screen.menu_button:
                     on_menu_page = True
+                    on_game_over = False
                     screen.show_menu()
 
                 if event.ui_element == screen.play_again_button:
                     on_menu_page = False
+                    on_game_over = False
                     started = True
                     first_run = True
                     screen.on_play_again_clicked()
 
                 if event.ui_element == screen.leaderboard_button:
+                    on_game_over = False
                     on_menu_page = False
                     screen.on_leaderboard_clicked()
 
                 if event.ui_element == screen.save_score_button:
                     on_menu_page = False
+                    on_game_over = False
                     screen.on_save_clicked()
 
                 if event.ui_element == screen.settings_button:
                     on_menu_page = False
+                    on_game_over = False
                     screen.on_settings_clicked()
 
             elif event.type == pygame_gui.UI_SELECTION_LIST_NEW_SELECTION:
@@ -76,7 +83,7 @@ def main():
             if started and event.type == pygame.KEYDOWN:
                 screen.update_fields(event.key)
 
-            if not started and event.type == pygame.KEYDOWN:
+            if not started and event.type == pygame.KEYDOWN and on_game_over:
                 screen.update_name(event.key)
 
             screen.manager.process_events(event)
